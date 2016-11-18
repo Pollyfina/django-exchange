@@ -123,6 +123,83 @@ def convert_value(value, source_currency, target_currency):
     return value * rate
 
 
+def convert_price_by_avg_days(price, target_currency, date_from, date_to):
+    """Converts the price of a currency to another one using Historical average exhange rates
+
+    :param price: the price value
+    :param type: Money
+
+    :param target_currency: target ISO-4217 currency code
+    :param type: str
+
+    :param date_from: historical exchange rate date
+    :param type: date
+
+    :param date_to: historical exchange rate date
+    :param type: date
+
+    :returns: converted price instance
+    :rtype: ``Money``
+    """
+
+    return convert_value_by_avg_days(price.amount, price.currency, target_currency, date_from, date_to)
+
+
+def convert_value_by_avg_days(value, source_currency, target_currency, date_from, date_to):
+    """Converts the price of a currency to another one using Historical average exhange rates
+
+    :param value: the price value
+    :param type: decimal
+
+    :param source_currency: source ISO-4217 currency code
+    :param type: str
+
+    :param target_currency: target ISO-4217 currency code
+    :param type: str
+
+    :param date_from: historical exchange rate date
+    :param type: date
+
+    :param date_to: historical exchange rate date
+    :param type: date
+
+    :returns: converted price instance
+    :rtype: ``Money``
+
+    """
+    # If price currency and target currency is same
+    # return given currency as is
+    if str(source_currency) == target_currency:
+        return Money(value, source_currency)
+
+    rate = ExchangeRate.objects.get_rate_by_avg_days(source_currency, target_currency, date_from, date_to)
+    # value is type Decimal then must first convert rate to Decimal before we can '*' the values
+    if isinstance(value, D):
+        rate = D(str(rate))
+    return Money(value * rate, target_currency)
+
+
+def convert_value(value, source_currency, target_currency):
+    """Converts the price of a currency to another one using exhange rates
+
+    :param price: the price value
+    :param type: decimal
+
+    :param source_currency: source ISO-4217 currency code
+    :param type: str
+
+    :param target_currency: target ISO-4217 currency code
+    :param type: str
+
+    :returns: converted price instance
+    :rtype: ``Money``
+
+    """
+    # If price currency and target currency is same
+    # return given currency as is
+    return convert_value_by_day(value, source_currency, target_currency, datetime.date.today())
+
+
 def convert(price, currency):
     """Shorthand function converts a price object instance of a source
     currency to target currency
